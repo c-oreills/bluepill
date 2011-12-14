@@ -300,10 +300,10 @@ module Bluepill
       elsif stop_signals
         # issue stop signals with configurable delay between each
         logger.warning "Sending stop signals to #{actual_pid}"
-        @threads << Thread.new(self, stop_signals.clone) do |process, stop_signals|
+        @threads << Thread.new(self, actual_pid, stop_signals.clone) do |process, pid, stop_signals|
           signal = stop_signals.shift
-          logger.info "Sending signal #{signal} to #{process.actual_pid}"
-          process.signal_process(signal.upcase) # send first signal
+          logger.info "Sending signal #{signal} to #{pid}"
+          process.signal_process(signal.upcase, pid) # send first signal
 
           until stop_signals.empty?
             # we already checked to make sure stop_signals had an odd number of items
@@ -313,12 +313,12 @@ module Bluepill
             logger.debug "Sleeping for #{delay} seconds"
             sleep delay
             #break unless signal_process(0) #break unless the process can be reached
-            unless process.signal_process(0)
+            unless process.signal_process(0, pid)
               logger.debug "Process has terminated."
               break
             end
-            logger.info "Sending signal #{signal} to #{process.actual_pid}"
-            process.signal_process(signal.upcase)
+            logger.info "Sending signal #{signal} to #{pid}"
+            process.signal_process(signal.upcase, pid)
           end
         end
       else
@@ -366,8 +366,9 @@ module Bluepill
       !!self.monitor_children
     end
 
-    def signal_process(code)
-      ::Process.kill(code, actual_pid)
+    def signal_process(code, pid=nil)
+      pid ||= actual_pid
+      ::Process.kill(code, pid)
       true
     rescue
       false
