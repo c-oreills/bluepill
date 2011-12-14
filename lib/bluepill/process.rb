@@ -314,7 +314,7 @@ module Bluepill
             sleep delay
             #break unless signal_process(0) #break unless the process can be reached
             unless process.signal_process(0, pid)
-              logger.debug "Process has terminated."
+              logger.debug "Process #{pid} has terminated."
               break
             end
             logger.info "Sending signal #{signal} to #{pid}"
